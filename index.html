@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Cron Scheduler</title>
+<!-- The Croner library for calculating the next run time -->
+<script type="module">
+    try {
+        const { default: Cron } = await import('https://cdn.jsdelivr.net/npm/croner@8/dist/croner.min.js');
+        window.Cron = Cron; 
+        document.dispatchEvent(new Event('croner-loaded'));
+    } catch (error) {
+        console.error("Failed to load Croner library:", error);
+        alert("Error: Could not load a required library. The page may not function correctly.");
+    }
+</script>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    color: #212529;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  .container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  h2 {
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+  }
+  fieldset {
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 15px;
+  }
+  legend {
+      font-weight: 600;
+      padding: 0 10px;
+      color: #007bff;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+  }
+  input[type="number"],
+  input[type="time"],
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  input:disabled {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+  }
+  .output-group {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    word-wrap: break-word;
+  }
+  #cron-expression {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+  }
+  #cron-preview, #cron-summary {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9em;
+  }
+  #next-run-time { font-weight: bold; color: #28a745; }
+  #next-run-error { font-weight: bold; color: #dc3545; }
+  #summary-text { font-style: italic; color: #495057; }
+  
+  .advanced-option { margin-bottom: 10px; }
+  .advanced-option label { display: inline-block; font-weight: normal; }
+  
+  /* --- New Unified Styles for Day/Month Grids --- */
+  .day-selector, .month-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 8px;
+  }
+  .day-selector label, .month-grid label {
+    padding: 8px; /* Use padding on the label for a larger click area */
+    margin: 0;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: normal;
+  }
+  .day-selector input, .month-grid input { display: none; }
+  
+  /* This rule applies the 'selected' style to the span inside a label when the hidden checkbox is checked */
+  .day-selector input:checked + span,
+  .month-grid input:checked + span {
+    background-color: #007bff;
+    color: white;
+    display: block;
+    border-radius: 4px;
+    padding: 8px;
+    margin: -8px; /* Negative margin fills the parent label's padding */
+  }
+
+  .month-range-selects { display: flex; gap: 10px; align-items: center; }
+  
+  #lang-switcher { text-align: right; margin-bottom: 20px; }
+  #lang-switcher button { background: none; border: 1px solid transparent; color: #007bff; cursor: pointer; padding: 5px; font-size: 0.9em; }
+  #lang-switcher button.active { font-weight: bold; border-bottom-color: #007bff; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div id="lang-switcher">
+        <button data-lang="en">English</button>
+        <button data-lang="pt">Português</button>
+    </div>
+
+  <h2 data-i18n-key="title">Advanced Cron Scheduler</h2>
+
+  <fieldset>
+    <legend data-i18n-key="primaryRule">Primary Rule</legend>
+    <label for="repeat-type" data-i18n-key="iWantToSet">I want to set the...</label>
+    <select id="repeat-type">
+        <option value="minutes" data-i18n-key="ruleMinutes">Minute Schedule</option>
+        <option value="hours" data-i18n-key="ruleHours">Hour Schedule</option>
+        <option value="daily" data-i18n-key="ruleDaily">Daily Time</option>
+        <option value="weekly" data-i18n-key="ruleWeekly">Weekly Schedule</option>
+        <option value="monthly" data-i18n-key="ruleMonthly">Monthly Schedule</option>
+    </select>
+  </fieldset>
+
+  <div id="panels-container">
+    <div id="minutes-panel"></div>
+    <div id="hours-panel"></div>
+    <div id="daily-panel"></div>
+    <div id="weekly-panel"></div>
+    <div id="monthly-panel"></div>
+  </div>
+  
+  <template id="minutes-hours-template">
+    <fieldset>
+        <legend data-i18n-key="timeSettings">Time settings</legend>
+        <div class="advanced-option">
+            <label><input type="radio" name="rule-type" value="any" checked> <span data-i18n-key="anyValue">Any value (*)</span></label>
+        </div>
+        <div class="advanced-option">
+            <label><input type="radio" name="rule-type" value="step"> <span data-i18n-key="everyStep">Every (Step)</span></label>
+            <input type="number" class="step-value" min="1" max="59" value="5">
+        </div>
+        <div class="advanced-option">
+            <label><input type="radio" name="rule-type" value="specific"> <span data-i18n-key="specificValues">Specific value(s) (e.g., 0,15,30)</span></label>
+            <input type="text" class="specific-value" placeholder="e.g., 5, 10-20, 30,45">
+        </div>
+    </fieldset>
+  </template>
+
+  <template id="daily-template">
+      <fieldset>
+          <legend data-i18n-key="dailySettings">Daily Settings</legend>
+          <label for="time" data-i18n-key="atTime">At this time of day:</label>
+          <input type="time" class="time-input" value="09:00" />
+      </fieldset>
+  </template>
+  
+  <template id="weekly-template">
+      <fieldset>
+          <legend data-i18n-key="weeklySettings">Weekly Settings</legend>
+          <label data-i18n-key="onDays">On these days of the week:</label>
+          <div class="day-selector"></div>
+      </fieldset>
+  </template>
+
+  <template id="monthly-template">
+      <fieldset>
+          <legend data-i18n-key="monthlySettings">Monthly Settings</legend>
+          <label for="month-rule-type" data-i18n-key="inMonths">During these months:</label>
+          <select class="month-rule-type">
+              <option value="any" data-i18n-key="everyMonth">Every Month (*)</option>
+              <option value="specific" data-i18n-key="specificMonths">Specific Month(s)</option>
+              <option value="range" data-i18n-key="rangeMonths">A Range of Months</option>
+          </select>
+          <div class="month-specific-container" style="display:none;">
+              <div class="month-grid"></div>
+          </div>
+          <div class="month-range-container" style="display:none;">
+              <select class="month-range-from"></select>
+              <span data-i18n-key="to">to</span>
+              <select class="month-range-to"></select>
+          </div>
+      </fieldset>
+  </template>
+
+  <div class="output-group">
+    <strong data-i18n-key="cronExpression">CRON Expression:</strong><br>
+    <code id="cron-expression">* * * * *</code>
+  </div>
+  
+  <div id="cron-summary" class="output-group">
+      <strong data-i18n-key="summary">Summary:</strong>
+      <div id="summary-text"></div>
+  </div>
+
+  <div id="cron-preview" class="output-group">
+      <strong data-i18n-key="nextRun">Next run:</strong> <span id="next-run-time"></span>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('croner-loaded', async () => {
+
+    let translations = {};
+    let cronParts = ['*', '*', '*', '*', '*'];
+    let currentLang = 'en';
+
+    async function loadTranslations() {
+        try {
+            const enResponse = await fetch('./locales/en.json');
+            translations.en = await enResponse.json();
+            
+            const ptResponse = await fetch('./locales/pt.json');
+            translations.pt = await ptResponse.json();
+
+        } catch (error) {
+            console.error("Could not load translation files:", error);
+            alert("Error loading language files. The application may not work correctly.");
+        }
+    }
+
+
+    const repeatTypeSelect = document.getElementById("repeat-type");
+    const cronExpressionOutput = document.getElementById("cron-expression");
+    const nextRunTimeOutput = document.getElementById("next-run-time");
+    const summaryTextOutput = document.getElementById("summary-text");
+    const panelsContainer = document.getElementById('panels-container');
+
+    function setLanguage(lang) {
+        if (!translations[lang]) return;
+        currentLang = lang;
+        localStorage.setItem('cronSchedulerLang', lang);
+
+        setupPanels(true);
+        
+        document.querySelectorAll('[data-i18n-key]').forEach(el => {
+            const key = el.dataset.i18nKey;
+            if (translations[currentLang][key]) {
+                el.textContent = translations[currentLang][key];
+            }
+        });
+
+        document.querySelectorAll('#lang-switcher button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        
+        updateUIFromCron();
+    }
+    
+    function setupPanels(forceRepopulate = false) {
+        if (!forceRepopulate && document.querySelector("#minutes-panel").innerHTML !== "") return;
+        
+        const t = translations[currentLang];
+        document.getElementById('minutes-panel').innerHTML = document.getElementById('minutes-hours-template').innerHTML;
+        document.getElementById('hours-panel').innerHTML = document.getElementById('minutes-hours-template').innerHTML;
+        document.getElementById('daily-panel').innerHTML = document.getElementById('daily-template').innerHTML;
+        document.getElementById('weekly-panel').innerHTML = document.getElementById('weekly-template').innerHTML;
+        document.getElementById('monthly-panel').innerHTML = document.getElementById('monthly-template').innerHTML;
+
+        const daySelector = document.querySelector("#weekly-panel .day-selector");
+        daySelector.innerHTML = '';
+        t.dowNamesShort.forEach((name, index) => {
+             if (index > 0) daySelector.innerHTML += `<label><input type="checkbox" value="${index}"><span>${name}</span></label>`;
+        });
+        daySelector.innerHTML += `<label><input type="checkbox" value="0"><span>${t.dowNamesShort[0]}</span></label>`;
+
+        const monthGrid = document.querySelector("#monthly-panel .month-grid");
+        const monthRangeFrom = document.querySelector("#monthly-panel .month-range-from");
+        const monthRangeTo = document.querySelector("#monthly-panel .month-range-to");
+        monthGrid.innerHTML = '';
+        monthRangeFrom.innerHTML = '';
+        monthRangeTo.innerHTML = '';
+        t.monthNames.forEach((name, index) => {
+            const monthValue = index + 1;
+            monthGrid.innerHTML += `<label><input type="checkbox" class="month-checkbox" value="${monthValue}"><span>${t.monthNamesShort[index]}</span></label>`;
+            monthRangeFrom.innerHTML += `<option value="${monthValue}">${name}</option>`;
+            monthRangeTo.innerHTML += `<option value="${monthValue}">${name}</option>`;
+        });
+        monthRangeTo.value = '12';
+    }
+
+    // **** THE FIX IS HERE: This function is fully translated now. ****
+    function generateSummary() {
+        const t = translations[currentLang];
+        let parts = [];
+        const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
+
+        if (minute.includes('/')) {
+            parts.push(`${t.summaryEvery} ${minute.split('/')[1]} ${t.summaryMinutes}`);
+        } else if (hour.includes('/')) {
+            parts.push(`${t.summaryAtMinute} 0, ${t.summaryEvery} ${hour.split('/')[1]} ${t.summaryHours}`);
+        } else if (minute !== '*' && hour !== '*') {
+            parts.push(`${t.summaryAt} ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`);
+        } else if (minute !== '*') {
+            parts.push(`${t.summaryAtMinute} ${minute}`);
+        } else if (hour !== '*') {
+            parts.push(`${t.summaryEvery} ${t.summaryMinute} ${t.summaryOfHour} ${hour}`);
+        } else {
+            parts.push(`${t.summaryEvery} ${t.summaryMinute}`);
+        }
+        
+        if (dayOfWeek !== '*') {
+            const dayNames = dayOfWeek.split(',').map(d => {
+                if(d.includes('-')) {
+                    const [start, end] = d.split('-').map(Number);
+                    let names = [];
+                    for(let i = start; i <= end; i++) {
+                       names.push(t.dowNames[i] || '');
+                    }
+                    return names.join(', ');
+                }
+                return t.dowNames[d] || ''
+            }).join(', ');
+            parts.push(`${t.summaryOn} ` + dayNames);
+        }
+        if (dayOfMonth !== '*') {
+            parts.push(`${t.summaryOn} ${t.summaryDay} ${dayOfMonth} ${t.summaryOfTheMonth}`);
+        }
+        if (month !== '*') {
+            if (month.includes('-')) {
+                parts.push(`${t.summaryFrom} ${t.monthNames[month.split('-')[0]-1]} ${t.to} ${t.monthNames[month.split('-')[1]-1]}`);
+            } else {
+                parts.push(`${t.summaryIn} ` + month.split(',').map(m => t.monthNames[m-1] || '').join(', '));
+            }
+        }
+        
+        summaryTextOutput.textContent = t.summaryRuns + " " + parts.join(', ') + '.';
+    }
+
+    function updatePreview() {
+        if (typeof window.Cron === 'undefined') return;
+        const cronString = cronParts.join(" ");
+        try {
+            const job = new window.Cron(cronString);
+            const nextRun = job.nextRun();
+            if (nextRun) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+                nextRunTimeOutput.textContent = nextRun.toLocaleString(currentLang, options);
+            } else {
+                nextRunTimeOutput.textContent = translations[currentLang].errorNoRuns;
+            }
+        } catch (e) {
+            nextRunTimeOutput.textContent = translations[currentLang].errorInvalid;
+        }
+    }
+
+    function updateUIFromCron() {
+        const type = repeatTypeSelect.value;
+        
+        document.querySelectorAll('#panels-container > div').forEach(p => p.style.display = 'none');
+        const panel = document.getElementById(`${type}-panel`);
+        if(!panel) return;
+        panel.style.display = 'block';
+
+        if (type === "minutes" || type === "hours") {
+            const part = (type === "minutes") ? cronParts[0] : cronParts[1];
+            if (part === '*') panel.querySelector('input[name="rule-type"][value="any"]').checked = true;
+            else if (part.includes('/')) {
+                panel.querySelector('input[name="rule-type"][value="step"]').checked = true;
+                panel.querySelector(".step-value").value = part.split('/')[1] || '1';
+            } else {
+                panel.querySelector('input[name="rule-type"][value="specific"]').checked = true;
+                panel.querySelector(".specific-value").value = part;
+            }
+            panel.querySelector(".step-value").disabled = !panel.querySelector('input[name="rule-type"][value="step"]').checked;
+            panel.querySelector(".specific-value").disabled = !panel.querySelector('input[name="rule-type"][value="specific"]').checked;
+        } else if (type === 'daily') {
+            const minuteForTime = cronParts[0].split(',')[0].split('-')[0].padStart(2, '0');
+            const hourForTime = cronParts[1].split(',')[0].split('-')[0].padStart(2, '0');
+            const timeInput = panel.querySelector(".time-input");
+            if (!isNaN(parseInt(minuteForTime)) && !isNaN(parseInt(hourForTime))) timeInput.value = `${hourForTime}:${minuteForTime}`;
+            else timeInput.value = '09:00';
+        } else if (type === 'weekly') {
+            const dayOfWeekPart = cronParts[4];
+            const activeDays = new Set();
+            if (dayOfWeekPart !== '*') {
+                dayOfWeekPart.split(',').forEach(part => {
+                    if (part.includes('-')) {
+                        const [start, end] = part.split('-').map(Number);
+                        for (let i = start; i <= end; i++) activeDays.add(String(i));
+                    } else activeDays.add(part);
+                });
+            }
+            panel.querySelectorAll(".day-selector input").forEach(cb => cb.checked = activeDays.has(cb.value));
+        } else if (type === 'monthly') {
+            const monthPart = cronParts[3];
+            if (monthPart === '*') panel.querySelector(".month-rule-type").value = 'any';
+            else if (monthPart.includes('-')) {
+                panel.querySelector(".month-rule-type").value = 'range';
+                const [from, to] = monthPart.split('-');
+                panel.querySelector(".month-range-from").value = from;
+                panel.querySelector(".month-range-to").value = to;
+            } else {
+                panel.querySelector(".month-rule-type").value = 'specific';
+                const selectedMonths = monthPart.split(',');
+                panel.querySelectorAll('.month-checkbox').forEach(cb => cb.checked = selectedMonths.includes(cb.value));
+            }
+            const monthRule = panel.querySelector(".month-rule-type").value;
+            panel.querySelector(".month-specific-container").style.display = monthRule === 'specific' ? 'block' : 'none';
+            panel.querySelector(".month-range-container").style.display = monthRule === 'range' ? 'flex' : 'none';
+        }
+
+        cronExpressionOutput.textContent = cronParts.join(" ");
+        updatePreview();
+        generateSummary();
+    }
+
+    function updateCronFromUI() {
+        const type = repeatTypeSelect.value;
+        const panel = document.getElementById(`${type}-panel`);
+        if (!panel) return;
+
+        if (type === "minutes" || type === "hours") {
+            const selectedRule = panel.querySelector('input[name="rule-type"]:checked').value;
+            const partToUpdate = (type === "minutes") ? 0 : 1;
+            if (type === "hours") cronParts[0] = '0';
+            
+            if (selectedRule === 'any') cronParts[partToUpdate] = '*';
+            else if (selectedRule === 'step') cronParts[partToUpdate] = `*/${panel.querySelector(".step-value").value || '1'}`;
+            else if (selectedRule === 'specific') cronParts[partToUpdate] = panel.querySelector(".specific-value").value || '0';
+        } else if (type === "daily") {
+            const [hour, minute] = panel.querySelector(".time-input").value.split(":");
+            cronParts = [minute, hour, '*', '*', '*'];
+        } else if (type === 'weekly') {
+            const selectedDays = Array.from(panel.querySelectorAll('.day-selector input:checked')).map(cb => cb.value);
+            cronParts[4] = selectedDays.length > 0 ? selectedDays.join(',') : '*';
+        } else if (type === "monthly") {
+            const monthRule = panel.querySelector(".month-rule-type").value;
+            if (monthRule === 'any') cronParts[3] = '*';
+            else if (monthRule === 'range') cronParts[3] = `${panel.querySelector(".month-range-from").value}-${panel.querySelector(".month-range-to").value}`;
+            else if (monthRule === 'specific') {
+                const selected = Array.from(panel.querySelectorAll('.month-checkbox:checked')).map(cb => cb.value);
+                cronParts[3] = selected.length > 0 ? selected.join(',') : '1';
+            }
+        }
+    }
+    
+    function loadCronFromURL() {
+        const hash = window.location.hash.substring(1);
+        if (!hash) return;
+        const potentialParts = hash.replace(/_/g, ' ').split(' ');
+        if (potentialParts.length !== 5) return;
+        cronParts = potentialParts;
+        const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
+        if (dayOfWeek !== '*') repeatTypeSelect.value = 'weekly';
+        else if (month !== '*') repeatTypeSelect.value = 'monthly';
+        else if (dayOfMonth !== '*') repeatTypeSelect.value = 'daily';
+        else if (hour.includes('/')) repeatTypeSelect.value = 'hours';
+        else if (minute.includes('/')) repeatTypeSelect.value = 'minutes';
+        else if (minute !== '*' && hour !== '*') repeatTypeSelect.value = 'daily';
+        else repeatTypeSelect.value = 'minutes';
+    }
+
+    function handleUpdate() {
+        updateCronFromUI();
+        updateUIFromCron();
+    }
+    
+    panelsContainer.addEventListener('input', handleUpdate);
+    panelsContainer.addEventListener('change', handleUpdate);
+    repeatTypeSelect.addEventListener('change', () => updateUIFromCron());
+
+    document.getElementById('lang-switcher').addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            setLanguage(event.target.dataset.lang);
+        }
+    });
+    
+    async function init() {
+        await loadTranslations();
+        
+        const savedLang = localStorage.getItem('cronSchedulerLang');
+        const userLang = navigator.language.split('-')[0];
+        const initialLang = (savedLang && translations[savedLang]) ? savedLang : (translations[userLang] ? userLang : 'en');
+        
+        setLanguage(initialLang);
+        
+        loadCronFromURL();
+        updateUIFromCron();
+    }
+    
+    init();
+
+});
+</script>
+</body>
+</html>
