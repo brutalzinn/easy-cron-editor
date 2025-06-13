@@ -149,7 +149,7 @@
     <select id="repeat-type">
         <option value="minutes" data-i18n-key="ruleMinutes">Minute Schedule</option>
         <option value="hours" data-i18n-key="ruleHours">Hour Schedule</option>
-        <option value="daily" data-i18n-key="ruleDaily">Daily Time</option>
+        <!-- <option value="daily" data-i18n-key="ruleDaily">Daily Time</option> -->
         <option value="weekly" data-i18n-key="ruleWeekly">Weekly Schedule</option>
         <option value="monthly" data-i18n-key="ruleMonthly">Monthly Schedule</option>
     </select>
@@ -478,10 +478,10 @@ document.addEventListener('croner-loaded', async () => {
         const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
         if (dayOfWeek !== '*') repeatTypeSelect.value = 'weekly';
         else if (month !== '*') repeatTypeSelect.value = 'monthly';
-        else if (dayOfMonth !== '*') repeatTypeSelect.value = 'daily';
+        else if (dayOfMonth !== '*') repeatTypeSelect.value = 'minutes';
         else if (hour.includes('/')) repeatTypeSelect.value = 'hours';
         else if (minute.includes('/')) repeatTypeSelect.value = 'minutes';
-        else if (minute !== '*' && hour !== '*') repeatTypeSelect.value = 'daily';
+        else if (minute !== '*' && hour !== '*') repeatTypeSelect.value = 'minutes';
         else repeatTypeSelect.value = 'minutes';
     }
 
