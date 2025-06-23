@@ -1,0 +1,201 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    color: #212529;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+  h2 {
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    transition: border-color 0.3s;
+  }
+  fieldset {
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 15px;
+      transition: border-color 0.3s;
+  }
+  legend {
+      font-weight: 600;
+      padding: 0 10px;
+      color: #007bff;
+      transition: color 0.3s;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+    transition: color 0.3s;
+  }
+  input[type="number"],
+  input[type="time"],
+  input[type="text"],
+  select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fff; 
+    color: #212529;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+  }
+  input:disabled {
+      background-color: #e9ecef;
+      cursor: not-allowed;
+      transition: background-color 0.3s;
+  }
+  .output-group {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    word-wrap: break-word;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  #cron-expression {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+    transition: color 0.3s;
+  }
+  #cron-preview, #cron-summary {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9em;
+      transition: background-color 0.3s, border-color 0.3s;
+  }
+  #next-run-time { font-weight: bold; color: #28a745; transition: color 0.3s; }
+  #next-run-error { font-weight: bold; color: #dc3545; transition: color 0.3s; }
+  #summary-text { font-style: italic; color: #495057; transition: color 0.3s; }
+  
+  .advanced-option { margin-bottom: 10px; }
+  .advanced-option label { display: inline-block; font-weight: normal; }
+  
+  .day-selector, .month-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 8px;
+  }
+  .day-selector label, .month-grid label {
+    padding: 8px;
+    margin: 0;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: normal;
+  }
+  .day-selector input, .month-grid input { display: none; }
+  
+  .day-selector input:checked + span,
+  .month-grid input:checked + span {
+    background-color: #007bff;
+    color: white;
+    display: block;
+    border-radius: 4px;
+    padding: 8px;
+    margin: -8px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .month-range-selects { display: flex; gap: 10px; align-items: center; }
+  
+  #lang-switcher { text-align: right; margin-bottom: 20px; }
+  #lang-switcher button { background: none; border: 1px solid transparent; color: #007bff; cursor: pointer; padding: 5px; font-size: 0.9em; transition: color 0.3s, border-color 0.3s; }
+  #lang-switcher button.active { font-weight: bold; border-bottom-color: #007bff; }
+
+  body.dark-mode {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+  }
+  body.dark-mode .container {
+    background-color: #3a3a3a;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  body.dark-mode h2 {
+    border-bottom-color: #555;
+  }
+  body.dark-mode fieldset {
+    border-color: #555;
+  }
+  body.dark-mode legend {
+    color: #90caf9; 
+  }
+  body.dark-mode label {
+    color: #ccc;
+  }
+  body.dark-mode input[type="number"],
+  body.dark-mode input[type="time"],
+  body.dark-mode input[type="text"],
+  body.dark-mode select {
+    background-color: #4a4a4a;
+    border-color: #666;
+    color: #e0e0e0;
+  }
+  body.dark-mode input:disabled {
+    background-color: #5a5a5a;
+  }
+  body.dark-mode .output-group {
+    background-color: #4a4a4a;
+    border-color: #666;
+  }
+  body.dark-mode #cron-expression {
+    color: #90caf9;
+  }
+  body.dark-mode #cron-preview, body.dark-mode #cron-summary {
+    background-color: #3a3a3a;
+    border-color: #555;
+  }
+  body.dark-mode #next-run-time { color: #8bc34a; } 
+  body.dark-mode #next-run-error { color: #ef9a9a; }
+  body.dark-mode #summary-text { color: #b0b0b0; }
+  body.dark-mode .day-selector label, body.dark-mode .month-grid label {
+    border-color: #666;
+  }
+  body.dark-mode .day-selector input:checked + span,
+  body.dark-mode .month-grid input:checked + span {
+    background-color: #90caf9;
+    color: #3a3a3a;
+  }
+  body.dark-mode #lang-switcher button {
+    color: #90caf9;
+  }
+  body.dark-mode #lang-switcher button.active {
+    border-bottom-color: #90caf9;
+  }
+  .dark-mode-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px;
+    position: absolute; 
+    color: #212529;
+    transition: color 0.3s;
+  }
+  body.dark-mode .dark-mode-toggle {
+    color: #e0e0e0; 
+  }
