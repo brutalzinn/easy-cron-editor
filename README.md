@@ -51,4 +51,4 @@ This project is open-source and welcomes contributions\! Feel free to report iss
 
 -----
 
-Developed by [Roberto Paes](https://robertocpaes.dev) \<span style="color: \#e25555;"\>♥\</span\>
+Developed by [Roberto Paes](https://robertocpaes.dev)
