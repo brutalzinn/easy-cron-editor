@@ -4,6 +4,9 @@
 
 Tired of the unpredictability of CRON expressions? This intuitive tool empowers you to effortlessly construct CRON schedules, bringing clarity and control to your automation tasks. Say goodbye to guesswork and unexpected run times\!
 
+you can test this tool at cron.robertinho.net
+
+
 ## Why This Tool?
 
 CRON expressions are powerful, but their compact syntax can often lead to confusion and errors. This builder was developed to:
@@ -21,6 +24,8 @@ CRON expressions are powerful, but their compact syntax can often lead to confus
   * **One-Click Copy:** Easily copy the generated CRON expression to your clipboard for quick integration into your projects.   
   * **Multi lang support:** Supporting portuguese and english and  you can add you own translation.   
   * **Share cron with URL parameter:** Support pass cron expressions by url like https://cron.robertinho.net/#5_0_*_8_*
+  * **Dark mode:** Why? because every project created for just fun needs a dark mode. WHY PRIORITIES?
+
 
 
 ## How to Use
