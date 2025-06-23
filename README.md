@@ -18,7 +18,10 @@ CRON expressions are powerful, but their compact syntax can often lead to confus
   * **User-Friendly Interface:** An easy-to-use design helps you select time units and build your expression step-by-step.
   * **Real-time Feedback:** Instantly see the generated CRON expression as you make your selections.
   * **"Next Run" Preview:** Get immediate insight into the **next scheduled execution time**, ensuring your expression behaves as expected.
-  * **One-Click Copy:** Easily copy the generated CRON expression to your clipboard for quick integration into your projects.
+  * **One-Click Copy:** Easily copy the generated CRON expression to your clipboard for quick integration into your projects.   
+  * **Multi lang support:** Supporting portuguese and english and  you can add you own translation.   
+  * **Share cron with URL parameter:** Support pass cron expressions by url like https://cron.robertinho.net/#5_0_*_8_*
+
 
 ## How to Use
 
@@ -26,6 +29,16 @@ CRON expressions are powerful, but their compact syntax can often lead to confus
 2.  **Review the Expression:** The tool will automatically update the **CRON Expression** field based on your choices.
 3.  **Check Next Run Time:** Verify the **Next run** display to confirm the exact upcoming execution.
 4.  **Copy and Implement:** Click the **"Copy"** button to grab the CRON expression and paste it directly into your CRON job configuration.
+
+## Screenshots
+
+### English version
+
+![first image](images/image_1.png)
+
+### PT version 
+![second image](images/image_2.png)
+
 
 ## Contribution
 
