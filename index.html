@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Advanced Cron Scheduler</title>
-<!-- The Croner library for calculating the next run time -->
 <script type="module">
     try {
         const { default: Cron } = await import('https://cdn.jsdelivr.net/npm/croner@8/dist/croner.min.js');
@@ -149,7 +148,6 @@
     <select id="repeat-type">
         <option value="minutes" data-i18n-key="ruleMinutes">Minute Schedule</option>
         <option value="hours" data-i18n-key="ruleHours">Hour Schedule</option>
-        <!-- <option value="daily" data-i18n-key="ruleDaily">Daily Time</option> -->
         <option value="weekly" data-i18n-key="ruleWeekly">Weekly Schedule</option>
         <option value="monthly" data-i18n-key="ruleMonthly">Monthly Schedule</option>
     </select>
@@ -216,9 +214,10 @@
       </fieldset>
   </template>
 
-  <div class="output-group">
-    <strong data-i18n-key="cronExpression">CRON Expression:</strong><br>
-    <code id="cron-expression">* * * * *</code>
+  <div class="output-group d-flex align-items-center">
+    <strong data-i18n-key="cronExpression" class="me-2">CRON Expression:</strong>
+    <code id="cron-expression" class="me-3">* * * * *</code>
+    <button id="copy-cron-button" data-i18n-key="cronCopyBtn" class="btn btn-primary btn-sm">Copy</button>
   </div>
   
   <div id="cron-summary" class="output-group">
@@ -229,6 +228,13 @@
   <div id="cron-preview" class="output-group">
       <strong data-i18n-key="nextRun">Next run:</strong> <span id="next-run-time"></span>
   </div>
+
+  <div class="output-group">
+    <span data-i18n-key="copyright">
+        Developed by
+    </span>
+    <a href="https://robertocpaes.dev" target="_blank" rel="noopener noreferrer">Roberto Paes</a> <span style="color: #e25555;">&hearts;</span>
+    </div>
 
 </div>
 
@@ -246,10 +252,11 @@ document.addEventListener('croner-loaded', async () => {
             
             const ptResponse = await fetch('./locales/pt.json');
             translations.pt = await ptResponse.json();
-
         } catch (error) {
             console.error("Could not load translation files:", error);
-            alert("Error loading language files. The application may not work correctly.");
+            // English is the default, so we can create a fallback.
+            translations.en = { "title": "Advanced Cron Scheduler", "errorInvalid": "Invalid Expression" };
+            translations.pt = { "title": "Agendador Cron Avançado", "errorInvalid": "Expressão Inválida" };
         }
     }
 
@@ -269,7 +276,7 @@ document.addEventListener('croner-loaded', async () => {
         
         document.querySelectorAll('[data-i18n-key]').forEach(el => {
             const key = el.dataset.i18nKey;
-            if (translations[currentLang][key]) {
+            if (translations[currentLang] && translations[currentLang][key]) {
                 el.textContent = translations[currentLang][key];
             }
         });
@@ -284,7 +291,7 @@ document.addEventListener('croner-loaded', async () => {
     function setupPanels(forceRepopulate = false) {
         if (!forceRepopulate && document.querySelector("#minutes-panel").innerHTML !== "") return;
         
-        const t = translations[currentLang];
+        const t = (translations && translations[currentLang]) ? translations[currentLang] : { dowNamesShort: [], monthNames: [], monthNamesShort: [] };
         document.getElementById('minutes-panel').innerHTML = document.getElementById('minutes-hours-template').innerHTML;
         document.getElementById('hours-panel').innerHTML = document.getElementById('minutes-hours-template').innerHTML;
         document.getElementById('daily-panel').innerHTML = document.getElementById('daily-template').innerHTML;
@@ -292,73 +299,77 @@ document.addEventListener('croner-loaded', async () => {
         document.getElementById('monthly-panel').innerHTML = document.getElementById('monthly-template').innerHTML;
 
         const daySelector = document.querySelector("#weekly-panel .day-selector");
-        daySelector.innerHTML = '';
-        t.dowNamesShort.forEach((name, index) => {
-             if (index > 0) daySelector.innerHTML += `<label><input type="checkbox" value="${index}"><span>${name}</span></label>`;
-        });
-        daySelector.innerHTML += `<label><input type="checkbox" value="0"><span>${t.dowNamesShort[0]}</span></label>`;
+        if (daySelector && t.dowNamesShort.length > 0) {
+            daySelector.innerHTML = '';
+            t.dowNamesShort.forEach((name, index) => {
+                if (index > 0) daySelector.innerHTML += `<label><input type="checkbox" value="${index}"><span>${name}</span></label>`;
+            });
+            daySelector.innerHTML += `<label><input type="checkbox" value="0"><span>${t.dowNamesShort[0]}</span></label>`;
+        }
 
         const monthGrid = document.querySelector("#monthly-panel .month-grid");
         const monthRangeFrom = document.querySelector("#monthly-panel .month-range-from");
         const monthRangeTo = document.querySelector("#monthly-panel .month-range-to");
-        monthGrid.innerHTML = '';
-        monthRangeFrom.innerHTML = '';
-        monthRangeTo.innerHTML = '';
-        t.monthNames.forEach((name, index) => {
-            const monthValue = index + 1;
-            monthGrid.innerHTML += `<label><input type="checkbox" class="month-checkbox" value="${monthValue}"><span>${t.monthNamesShort[index]}</span></label>`;
-            monthRangeFrom.innerHTML += `<option value="${monthValue}">${name}</option>`;
-            monthRangeTo.innerHTML += `<option value="${monthValue}">${name}</option>`;
-        });
-        monthRangeTo.value = '12';
+        if (monthGrid && t.monthNames.length > 0) {
+            monthGrid.innerHTML = '';
+            monthRangeFrom.innerHTML = '';
+            monthRangeTo.innerHTML = '';
+            t.monthNames.forEach((name, index) => {
+                const monthValue = index + 1;
+                monthGrid.innerHTML += `<label><input type="checkbox" class="month-checkbox" value="${monthValue}"><span>${t.monthNamesShort[index]}</span></label>`;
+                monthRangeFrom.innerHTML += `<option value="${monthValue}">${name}</option>`;
+                monthRangeTo.innerHTML += `<option value="${monthValue}">${name}</option>`;
+            });
+            monthRangeTo.value = '12';
+        }
     }
 
-    // **** THE FIX IS HERE: This function is fully translated now. ****
     function generateSummary() {
+        if (!translations[currentLang]) return;
         const t = translations[currentLang];
         let parts = [];
         const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
-
-        if (minute.includes('/')) {
-            parts.push(`${t.summaryEvery} ${minute.split('/')[1]} ${t.summaryMinutes}`);
-        } else if (hour.includes('/')) {
-            parts.push(`${t.summaryAtMinute} 0, ${t.summaryEvery} ${hour.split('/')[1]} ${t.summaryHours}`);
-        } else if (minute !== '*' && hour !== '*') {
-            parts.push(`${t.summaryAt} ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`);
-        } else if (minute !== '*') {
-            parts.push(`${t.summaryAtMinute} ${minute}`);
-        } else if (hour !== '*') {
-            parts.push(`${t.summaryEvery} ${t.summaryMinute} ${t.summaryOfHour} ${hour}`);
-        } else {
-            parts.push(`${t.summaryEvery} ${t.summaryMinute}`);
-        }
-        
-        if (dayOfWeek !== '*') {
-            const dayNames = dayOfWeek.split(',').map(d => {
-                if(d.includes('-')) {
-                    const [start, end] = d.split('-').map(Number);
-                    let names = [];
-                    for(let i = start; i <= end; i++) {
-                       names.push(t.dowNames[i] || '');
-                    }
-                    return names.join(', ');
-                }
-                return t.dowNames[d] || ''
-            }).join(', ');
-            parts.push(`${t.summaryOn} ` + dayNames);
-        }
-        if (dayOfMonth !== '*') {
-            parts.push(`${t.summaryOn} ${t.summaryDay} ${dayOfMonth} ${t.summaryOfTheMonth}`);
-        }
-        if (month !== '*') {
-            if (month.includes('-')) {
-                parts.push(`${t.summaryFrom} ${t.monthNames[month.split('-')[0]-1]} ${t.to} ${t.monthNames[month.split('-')[1]-1]}`);
+        if(t.summaryEvery){
+             if (minute.includes('/')) {
+                parts.push(`${t.summaryEvery} ${minute.split('/')[1]} ${t.summaryMinutes}`);
+            } else if (hour.includes('/')) {
+                parts.push(`${t.summaryAtMinute} 0, ${t.summaryEvery} ${hour.split('/')[1]} ${t.summaryHours}`);
+            } else if (minute !== '*' && hour !== '*') {
+                parts.push(`${t.summaryAt} ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`);
+            } else if (minute !== '*') {
+                parts.push(`${t.summaryAtMinute} ${minute}`);
+            } else if (hour !== '*') {
+                parts.push(`${t.summaryEvery} ${t.summaryMinute} ${t.summaryOfHour} ${hour}`);
             } else {
-                parts.push(`${t.summaryIn} ` + month.split(',').map(m => t.monthNames[m-1] || '').join(', '));
+                parts.push(`${t.summaryEvery} ${t.summaryMinute}`);
             }
+            
+            if (dayOfWeek !== '*') {
+                const dayNames = dayOfWeek.split(',').map(d => {
+                    if(d.includes('-')) {
+                        const [start, end] = d.split('-').map(Number);
+                        let names = [];
+                        for(let i = start; i <= end; i++) {
+                        names.push(t.dowNames[i] || '');
+                        }
+                        return names.join(', ');
+                    }
+                    return t.dowNames[d] || ''
+                }).join(', ');
+                parts.push(`${t.summaryOn} ` + dayNames);
+            }
+            if (dayOfMonth !== '*') {
+                parts.push(`${t.summaryOn} ${t.summaryDay} ${dayOfMonth} ${t.summaryOfTheMonth}`);
+            }
+            if (month !== '*') {
+                if (month.includes('-')) {
+                    parts.push(`${t.summaryFrom} ${t.monthNames[month.split('-')[0]-1]} ${t.to} ${t.monthNames[month.split('-')[1]-1]}`);
+                } else {
+                    parts.push(`${t.summaryIn} ` + month.split(',').map(m => t.monthNames[m-1] || '').join(', '));
+                }
+            }
+            summaryTextOutput.textContent = t.summaryRuns + " " + parts.join(', ') + '.';
         }
-        
-        summaryTextOutput.textContent = t.summaryRuns + " " + parts.join(', ') + '.';
     }
 
     function updatePreview() {
@@ -371,10 +382,10 @@ document.addEventListener('croner-loaded', async () => {
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
                 nextRunTimeOutput.textContent = nextRun.toLocaleString(currentLang, options);
             } else {
-                nextRunTimeOutput.textContent = translations[currentLang].errorNoRuns;
+                nextRunTimeOutput.textContent = (translations[currentLang] && translations[currentLang].errorNoRuns) ? translations[currentLang].errorNoRuns : "No further runs scheduled.";
             }
         } catch (e) {
-            nextRunTimeOutput.textContent = translations[currentLang].errorInvalid;
+            nextRunTimeOutput.textContent = (translations[currentLang] && translations[currentLang].errorInvalid) ? translations[currentLang].errorInvalid : "Invalid expression.";
         }
     }
 
@@ -469,20 +480,24 @@ document.addEventListener('croner-loaded', async () => {
         }
     }
     
+
     function loadCronFromURL() {
         const hash = window.location.hash.substring(1);
         if (!hash) return;
-        const potentialParts = hash.replace(/_/g, ' ').split(' ');
-        if (potentialParts.length !== 5) return;
+        const decodedHash = decodeURIComponent(hash);
+        const potentialParts = decodedHash.replace(/_/g, ' ').split(' ');
+        if (potentialParts.length !== 5) return; 
         cronParts = potentialParts;
         const [minute, hour, dayOfMonth, month, dayOfWeek] = cronParts;
-        if (dayOfWeek !== '*') repeatTypeSelect.value = 'weekly';
-        else if (month !== '*') repeatTypeSelect.value = 'monthly';
-        else if (dayOfMonth !== '*') repeatTypeSelect.value = 'minutes';
-        else if (hour.includes('/')) repeatTypeSelect.value = 'hours';
-        else if (minute.includes('/')) repeatTypeSelect.value = 'minutes';
-        else if (minute !== '*' && hour !== '*') repeatTypeSelect.value = 'minutes';
-        else repeatTypeSelect.value = 'minutes';
+        if (dayOfWeek !== '*') {
+            repeatTypeSelect.value = 'weekly';
+        } else if (month !== '*') {
+            repeatTypeSelect.value = 'monthly';
+        } else if (hour.includes('/')) {
+            repeatTypeSelect.value = 'hours';
+        } else {
+            repeatTypeSelect.value = 'minutes';
+        }
     }
 
     function handleUpdate() {
@@ -499,6 +514,34 @@ document.addEventListener('croner-loaded', async () => {
             setLanguage(event.target.dataset.lang);
         }
     });
+
+    document.getElementById('copy-cron-button').addEventListener('click', function() {
+    const cronExpressionCode = document.getElementById('cron-expression');
+    const cronExpressionText = cronExpressionCode.innerText;
+    const t = translations[currentLang];
+
+    navigator.clipboard.writeText(cronExpressionText)
+      .then(() => {
+        const originalButtonText = t.cronCopyBtn
+        this.innerText = t.cronCopyBtnConfirm;
+        this.classList.add('btn-success'); 
+        setTimeout(() => {
+          this.innerText = originalButtonText;
+          this.classList.remove('btn-success');
+          this.classList.add('btn-primary'); 
+        }, 1500);
+      })
+      .catch(err => {
+        console.error('Failed to copy CRON Expression: ', err);
+        const textArea = document.createElement('textarea');
+        textArea.value = cronExpressionText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+        alert('CRON Expression copied to clipboard (fallback)!');
+      });
+  });
     
     async function init() {
         await loadTranslations();
@@ -506,11 +549,8 @@ document.addEventListener('croner-loaded', async () => {
         const savedLang = localStorage.getItem('cronSchedulerLang');
         const userLang = navigator.language.split('-')[0];
         const initialLang = (savedLang && translations[savedLang]) ? savedLang : (translations[userLang] ? userLang : 'en');
-        
+        loadCronFromURL(); 
         setLanguage(initialLang);
-        
-        loadCronFromURL();
-        updateUIFromCron();
     }
     
     init();

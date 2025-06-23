@@ -1,5 +1,5 @@
 {
-    "title": "Agendador Cron Avançado",
+    "title": "Agendador Cron",
     "primaryRule": "Regra Primária",
     "iWantToSet": "Eu quero definir o...",
     "ruleMinutes": "Agendamento por Minuto",
@@ -42,6 +42,9 @@
     "summaryMinute": "minuto",
     "summaryOfTheMonth": "do mês",
     "errorInvalid": "Expressão inválida",
-    "errorNoRuns": "Nenhuma execução futura encontrada."
+    "errorNoRuns": "Nenhuma execução futura encontrada.",
+    "cronCopyBtn": "Copiar",
+    "cronCopyBtnConfirm": "Copiado",
+    "copyright": "Desenvolvido por"
   }
   

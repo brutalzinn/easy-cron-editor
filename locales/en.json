@@ -1,5 +1,5 @@
 {
-    "title": "Advanced Cron Scheduler",
+    "title": "Advanced Cron",
     "primaryRule": "Primary Rule",
     "iWantToSet": "I want to set the...",
     "ruleMinutes": "Minute Schedule",
@@ -42,5 +42,8 @@
     "summaryMinute": "minute",
     "summaryOfTheMonth": "of the month",
     "errorInvalid": "Invalid expression",
-    "errorNoRuns": "No future runs found."
+    "errorNoRuns": "No future runs found.",
+    "cronCopyBtn": "Copy",
+    "cronCopyBtnConfirm": "Copied",
+    "copyright": "Developed by"
   }
