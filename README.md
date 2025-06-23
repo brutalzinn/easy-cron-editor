@@ -4,7 +4,7 @@
 
 Tired of the unpredictability of CRON expressions? This intuitive tool empowers you to effortlessly construct CRON schedules, bringing clarity and control to your automation tasks. Say goodbye to guesswork and unexpected run times\!
 
-you can test this tool at cron.robertinho.net
+you can test this tool at https://cron.robertinho.net
 
 
 ## Why This Tool?
